@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rental Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f4f4f0;
+    color: #1a1a18;
+    padding: 2rem;
+    min-height: 100vh;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    color: #1a1a18;
+  }
+  .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: #888780;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin: 1.75rem 0 0.75rem;
+  }
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+  .metric-card {
+    background: #e8e8e4;
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  .metric-label { font-size: 12px; color: #5f5e5a; margin-bottom: 4px; }
+  .metric-value { font-size: 22px; font-weight: 500; }
+  .metric-sub { font-size: 12px; color: #888780; margin-top: 4px; }
+  .green { color: #0f6e56; }
+  .red { color: #a32d2d; }
+  .chart-wrap {
+    background: #fff;
+    border: 0.5px solid rgba(0,0,0,0.12);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-top: 1.5rem;
+  }
+  .chart-legend {
+    display: flex; gap: 16px; margin-bottom: 12px; font-size: 12px; color: #5f5e5a;
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px;
+  }
+  .chart-container { position: relative; width: 100%; height: 220px; }
+  .apt-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .apt-card {
+    background: #fff;
+    border: 0.5px solid rgba(0,0,0,0.12);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+  }
+  .apt-type { font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+  .apt-row {
+    display: flex; justify-content: space-between;
+    font-size: 13px; color: #5f5e5a; margin: 3px 0;
+  }
+  .apt-row span:last-child { color: #1a1a18; font-weight: 500; }
+  .bar-bg { background: #d3d1c7; border-radius: 4px; height: 6px; margin: 10px 0 6px; }
+  .bar-fill { height: 6px; border-radius: 4px; }
+  .apt-footer { display: flex; justify-content: space-between; align-items: center; }
+  .pct { font-size: 12px; color: #5f5e5a; }
+  .pill {
+    font-size: 11px; padding: 2px 8px; border-radius: 20px;
+  }
+  .pill-green { background: #e1f5ee; color: #085041; }
+  .pill-amber { background: #faeeda; color: #633806; }
+  .caretaker-card {
+    background: #fff;
+    border: 0.5px solid rgba(0,0,0,0.12);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: #e1f5ee; color: #0f6e56;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 500; flex-shrink: 0;
+  }
+  .caret-rows {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 24px;
+    flex: 1;
+  }
+  .caret-name { font-size: 15px; font-weight: 500; margin-bottom: 8px; }
+
+  @media (max-width: 480px) {
+    body { padding: 1rem; }
+    .caret-rows { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Rental Dashboard</h1>
+
+<div class="metrics-grid">
+  <div class="metric-card">
+    <p class="metric-label">Total collected</p>
+    <p class="metric-value">548,500</p>
+    <p class="metric-sub">KES this month</p>
+  </div>
+  <div class="metric-card">
+    <p class="metric-label">Balance remaining</p>
+    <p class="metric-value red">26,500</p>
+    <p class="metric-sub">KES outstanding</p>
+  </div>
+  <div class="metric-card">
+    <p class="metric-label">Expected total</p>
+    <p class="metric-value">575,000</p>
+    <p class="metric-sub">KES full payment</p>
+  </div>
+  <div class="metric-card">
+    <p class="metric-label">Collection rate</p>
+    <p class="metric-value green">95.4%</p>
+    <p class="metric-sub">17 units total</p>
+  </div>
+</div>
+
+<div class="chart-wrap">
+  <div class="chart-legend">
+    <span><span class="legend-dot" style="background:#1D9E75;"></span>Collected</span>
+    <span><span class="legend-dot" style="background:#D3D1C7;"></span>Expected</span>
+  </div>
+  <div class="chart-container">
+    <canvas id="collectionChart" role="img" aria-label="Collected vs expected rent by apartment type"></canvas>
+  </div>
+</div>
+
+<p class="section-title">By apartment type</p>
+<div class="apt-grid">
+
+  <div class="apt-card">
+    <p class="apt-type">2 Bed 2 Bath</p>
+    <div class="apt-row"><span>Units</span><span>6</span></div>
+    <div class="apt-row"><span>Collected</span><span>213,500</span></div>
+    <div class="apt-row"><span>Expected</span><span>215,000</span></div>
+    <div class="bar-bg"><div class="bar-fill" style="width:99.3%;background:#1D9E75;"></div></div>
+    <div class="apt-footer">
+      <span class="pct">99.3% collected</span>
+      <span class="pill pill-green">1,500 due</span>
+    </div>
+  </div>
+
+  <div class="apt-card">
+    <p class="apt-type">3 Bed 3 Bath</p>
+    <div class="apt-row"><span>Units</span><span>3</span></div>
+    <div class="apt-row"><span>Collected</span><span>113,000</span></div>
+    <div class="apt-row"><span>Expected</span><span>135,000</span></div>
+    <div class="bar-bg"><div class="bar-fill" style="width:83.7%;background:#EF9F27;"></div></div>
+    <div class="apt-footer">
+      <span class="pct">83.7% collected</span>
+      <span class="pill pill-amber">22,000 due</span>
+    </div>
+  </div>
+
+  <div class="apt-card">
+    <p class="apt-type">2 Bed 1 Bath</p>
+    <div class="apt-row"><span>Units</span><span>4</span></div>
+    <div class="apt-row"><span>Collected</span><span>112,000</span></div>
+    <div class="apt-row"><span>Expected</span><span>125,000</span></div>
+    <div class="bar-bg"><div class="bar-fill" style="width:89.6%;background:#EF9F27;"></div></div>
+    <div class="apt-footer">
+      <span class="pct">89.6% collected</span>
+      <span class="pill pill-amber">13,000 due</span>
+    </div>
+  </div>
+
+</div>
+
+<p class="section-title">Caretaker summary</p>
+<div class="caretaker-card">
+  <div class="avatar">LN</div>
+  <div style="flex:1;">
+    <p class="caret-name">Linet</p>
+    <div class="caret-rows">
+      <div class="apt-row"><span>Units managed</span><span>17</span></div>
+      <div class="apt-row"><span>Rent expected</span><span>575,000</span></div>
+      <div class="apt-row"><span>Rent collected</span><span>548,500</span></div>
+      <div class="apt-row"><span>Caretaker cut</span><span class="green">54,850</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+new Chart(document.getElementById('collectionChart'), {
+  type: 'bar',
+  data: {
+    labels: ['2 Bed 2 Bath', '3 Bed 3 Bath', '2 Bed 1 Bath'],
+    datasets: [
+      {
+        label: 'Collected',
+        data: [213500, 113000, 112000],
+        backgroundColor: '#1D9E75',
+        borderRadius: 4,
+        barPercentage: 0.5
+      },
+      {
+        label: 'Expected',
+        data: [215000, 135000, 125000],
+        backgroundColor: '#D3D1C7',
+        borderRadius: 4,
+        barPercentage: 0.5
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ctx.dataset.label + ': KES ' + ctx.parsed.y.toLocaleString()
+        }
+      }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 12 } } },
+      y: {
+        ticks: { font: { size: 11 }, callback: v => (v/1000) + 'k' },
+        grid: { color: 'rgba(0,0,0,0.06)' }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>
